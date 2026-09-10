@@ -1,9 +1,14 @@
 import { expect } from "chai";
-import { network } from "hardhat";
+import hre from "hardhat";
+import { parseUnits } from "ethers";
 let loadFixture: any;
-const { ethers } = await network.create();
+
+// Withdraw amount variable for testing withdrawal limit
+let withdrawAmount = parseUnits("1", "ether"); // 0.1 ETH;
 {
-  const _hh_helpers = await import("@nomicfoundation/hardhat-network-helpers");
+  const _hh_helpers = (await import(
+    "@nomicfoundation/hardhat-network-helpers"
+  )) as any;
   loadFixture = _hh_helpers.loadFixture ?? _hh_helpers.default?.loadFixture;
 }
 if (typeof loadFixture !== "function") {
@@ -15,11 +20,11 @@ if (typeof loadFixture !== "function") {
 describe("Faucet", function () {
   // Deploy and set state variables for contract
   async function deployContractAndSetVariables() {
-    const Faucet = await ethers.getContractFactory("Faucet");
+    const Faucet = await hre.ethers.getContractFactory("Faucet");
     const faucet = await Faucet.deploy();
     // await faucet.deployed();
 
-    const [owner] = await ethers.getSigners();
+    const [owner] = await hre.ethers.getSigners();
 
     console.log("Signer 1 address:", owner.address);
     return { faucet, owner };
@@ -29,5 +34,13 @@ describe("Faucet", function () {
     const { faucet, owner } = await loadFixture(deployContractAndSetVariables);
 
     expect(await faucet.owner()).to.equal(owner.address);
+  });
+
+  it("should not allow withrawal above 0.1 ETH at a time", async function () {
+    const { faucet } = await loadFixture(deployContractAndSetVariables);
+
+    await expect(faucet.withdraw(withdrawAmount)).to.be.revertedWith(
+      "Withdrawal amount exceeds the limit of 0.1 ETH",
+    );
   });
 });
