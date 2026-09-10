@@ -6,7 +6,7 @@ const { ethers } = await network.create();
 
 describe("Faucet", function () {
   // Deploy and set state variables for contract
-  async function deployAndSetVariables() {
+  async function deployContractAndSetVariables() {
     const Faucet = await ethers.getContractFactory("Faucet");
     const faucet = await Faucet.deploy();
     await faucet.deployed();
@@ -16,4 +16,10 @@ describe("Faucet", function () {
     console.log("Signer 1 address:", owner.address);
     return { faucet, owner };
   }
+
+  it("should deploy the contract and set the owner correctly", async function () {
+    const { faucet, owner } = await loadFixture(deployContractAndSetVariables);
+
+    expect(await faucet.owner()).to.equal(owner.address);
+  });
 });
